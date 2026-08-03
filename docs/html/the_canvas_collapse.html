@@ -1,0 +1,1136 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>The Canvas Collapse: A Retrospective on How the Largest Education Breach Could Have Been Prevented</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;0,900;1,400;1,700&family=Source+Serif+4:ital,opsz,wght@0,8..60,300;0,8..60,400;0,8..60,600;1,8..60,300;1,8..60,400&family=JetBrains+Mono:wght@400;600&display=swap');
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --ink: #141010;
+  --paper: #FAF8F4;
+  --paper-dark: #F0EDE6;
+  --red: #B01A1A;
+  --red-pale: #F5E8E8;
+  --amber: #8B4E00;
+  --amber-pale: #F7EFE3;
+  --slate: #2C3A4A;
+  --rule: #D8D0C4;
+  --muted: #6B6259;
+  --display: 'Playfair Display', Georgia, serif;
+  --body: 'Source Serif 4', Georgia, serif;
+  --mono: 'JetBrains Mono', monospace;
+}
+
+html { font-size: 18px; scroll-behavior: smooth; }
+
+body {
+  font-family: var(--body);
+  color: var(--ink);
+  background: var(--paper);
+  line-height: 1.75;
+}
+
+/* ── MASTHEAD ── */
+.masthead {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 2rem 2rem 0;
+  position: relative;
+  overflow: hidden;
+}
+
+.masthead::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,
+    transparent 39px,
+    rgba(255,255,255,0.03) 39px,
+    rgba(255,255,255,0.03) 40px
+  );
+  pointer-events: none;
+}
+
+.pub-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1px solid rgba(255,255,255,0.15);
+  padding-bottom: 0.75rem;
+  margin-bottom: 1.5rem;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.45);
+}
+
+.pub-name {
+  font-family: var(--display);
+  font-size: 13px;
+  letter-spacing: 0.25em;
+  color: rgba(255,255,255,0.7);
+  text-transform: uppercase;
+  font-weight: 400;
+}
+
+.kicker {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #E8A87C;
+  margin-bottom: 1rem;
+}
+
+.headline {
+  font-family: var(--display);
+  font-size: clamp(2.2rem, 5vw, 3.8rem);
+  font-weight: 900;
+  line-height: 1.05;
+  color: #fff;
+  max-width: 860px;
+  margin-bottom: 1rem;
+}
+
+.deck {
+  font-family: var(--body);
+  font-size: 1.05rem;
+  font-weight: 300;
+  font-style: italic;
+  color: rgba(255,255,255,0.65);
+  max-width: 720px;
+  line-height: 1.65;
+  margin-bottom: 2rem;
+}
+
+.byline-bar {
+  display: flex;
+  gap: 2.5rem;
+  align-items: center;
+  flex-wrap: wrap;
+  padding: 1rem 0;
+  border-top: 1px solid rgba(255,255,255,0.12);
+  font-size: 0.78rem;
+}
+
+.byline-item {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+}
+
+.byline-item strong { color: rgba(255,255,255,0.75); font-weight: 600; }
+
+/* ── ALERT BAR ── */
+.alert-bar {
+  background: var(--red);
+  color: #fff;
+  padding: 0.6rem 2rem;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.alert-bar::before {
+  content: '⬤';
+  font-size: 8px;
+  animation: blink 2s infinite;
+}
+
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+/* ── ARTICLE LAYOUT ── */
+.article-wrapper {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 0 2rem;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 4rem;
+  align-items: start;
+}
+
+.article-body { padding: 3rem 0; }
+.sidebar { padding: 3rem 0; position: sticky; top: 2rem; }
+
+/* ── TYPOGRAPHY ── */
+.drop-cap::first-letter {
+  font-family: var(--display);
+  font-size: 5.2em;
+  font-weight: 900;
+  float: left;
+  line-height: 0.78;
+  margin: 0.08em 0.1em 0 0;
+  color: var(--red);
+}
+
+p {
+  font-size: 1rem;
+  line-height: 1.8;
+  margin-bottom: 1.4rem;
+  color: var(--ink);
+}
+
+p:last-child { margin-bottom: 0; }
+
+/* ── SECTION HEADERS ── */
+.section-break {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin: 3rem 0 1.5rem;
+}
+
+.section-rule {
+  flex: 1;
+  height: 1px;
+  background: var(--rule);
+}
+
+.section-label {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+h2 {
+  font-family: var(--display);
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+  color: var(--ink);
+  margin-bottom: 1.1rem;
+}
+
+h3 {
+  font-family: var(--display);
+  font-size: 1.2rem;
+  font-weight: 700;
+  font-style: italic;
+  color: var(--slate);
+  margin: 2rem 0 0.75rem;
+}
+
+/* ── PULL QUOTES ── */
+.pull-quote {
+  border-left: 4px solid var(--red);
+  margin: 2.5rem 0;
+  padding: 0.5rem 0 0.5rem 1.75rem;
+}
+
+.pull-quote blockquote {
+  font-family: var(--display);
+  font-size: 1.3rem;
+  font-style: italic;
+  font-weight: 400;
+  line-height: 1.45;
+  color: var(--slate);
+  margin-bottom: 0.5rem;
+}
+
+.pull-quote cite {
+  font-family: var(--mono);
+  font-size: 9.5px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-style: normal;
+}
+
+/* ── CALLOUT BOXES ── */
+.callout {
+  margin: 2rem 0;
+  padding: 1.25rem 1.5rem;
+  border-radius: 2px;
+  font-size: 0.92rem;
+  line-height: 1.65;
+}
+
+.callout p { font-size: 0.92rem; margin-bottom: 0.75rem; }
+.callout p:last-child { margin-bottom: 0; }
+.callout-title {
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  margin-bottom: 0.6rem;
+}
+
+.callout-red { background: var(--red-pale); border-left: 3px solid var(--red); }
+.callout-red .callout-title { color: var(--red); }
+.callout-amber { background: var(--amber-pale); border-left: 3px solid var(--amber); }
+.callout-amber .callout-title { color: var(--amber); }
+.callout-slate { background: #EEF1F4; border-left: 3px solid var(--slate); }
+.callout-slate .callout-title { color: var(--slate); }
+
+/* ── TIMELINE INSET ── */
+.timeline-inset {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 1.75rem;
+  margin: 2.5rem 0;
+  border-radius: 2px;
+}
+
+.timeline-inset-title {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: rgba(255,255,255,0.4);
+  margin-bottom: 1.25rem;
+}
+
+.tl-row {
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 1rem;
+  padding: 0.65rem 0;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  font-size: 0.82rem;
+}
+
+.tl-row:last-child { border-bottom: none; }
+.tl-date { font-family: var(--mono); font-size: 9.5px; color: rgba(255,255,255,0.4); padding-top: 2px; }
+.tl-event { color: rgba(255,255,255,0.85); line-height: 1.5; }
+.tl-event strong { color: #fff; }
+.tl-event .flag {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 8px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  padding: 1px 5px;
+  border-radius: 2px;
+  margin-left: 5px;
+  vertical-align: middle;
+}
+.flag-red { background: #B01A1A; color: #fff; }
+.flag-amber { background: #8B4E00; color: #fff; }
+.flag-green { background: #1A5C2A; color: #fff; }
+
+/* ── DATA HIGHLIGHT ── */
+.data-row {
+  display: flex;
+  gap: 1px;
+  background: var(--rule);
+  margin: 2rem 0;
+  border: 1px solid var(--rule);
+}
+
+.data-cell {
+  flex: 1;
+  background: var(--paper);
+  padding: 1.1rem 1rem;
+  text-align: center;
+}
+
+.data-number {
+  font-family: var(--display);
+  font-size: 2rem;
+  font-weight: 900;
+  color: var(--red);
+  line-height: 1;
+  margin-bottom: 0.3rem;
+}
+
+.data-label {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+/* ── SIDEBAR ── */
+.sidebar-card {
+  border: 1px solid var(--rule);
+  margin-bottom: 1.5rem;
+  background: #fff;
+}
+
+.sidebar-card-head {
+  background: var(--ink);
+  color: var(--paper);
+  padding: 0.6rem 1rem;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.sidebar-card-body {
+  padding: 1rem;
+  font-size: 0.82rem;
+  line-height: 1.6;
+  color: var(--ink);
+}
+
+.sidebar-card-body p { font-size: 0.82rem; margin-bottom: 0.7rem; }
+
+.sidebar-list {
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.sidebar-list li {
+  display: flex;
+  align-items: baseline;
+  gap: 0.5rem;
+  font-size: 0.8rem;
+  color: var(--ink);
+  padding-bottom: 0.5rem;
+  border-bottom: 1px dashed var(--rule);
+  line-height: 1.45;
+}
+
+.sidebar-list li:last-child { border-bottom: none; padding-bottom: 0; }
+
+.sidebar-list li::before {
+  content: '▸';
+  color: var(--red);
+  flex-shrink: 0;
+  font-size: 9px;
+  padding-top: 3px;
+}
+
+.status-pill {
+  display: inline-block;
+  font-family: var(--mono);
+  font-size: 8.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 2px 7px;
+  border-radius: 2px;
+  white-space: nowrap;
+}
+
+.pill-red { background: var(--red-pale); color: var(--red); }
+.pill-amber { background: var(--amber-pale); color: var(--amber); }
+.pill-green { background: #E4F2E8; color: #1A5C2A; }
+
+/* ── SECTION DIVIDER ── */
+.ornament {
+  text-align: center;
+  color: var(--rule);
+  font-size: 1.2rem;
+  margin: 2.5rem 0;
+  letter-spacing: 0.8em;
+}
+
+/* ── FOOTER ── */
+.article-footer {
+  background: var(--ink);
+  color: rgba(255,255,255,0.4);
+  padding: 2rem;
+  font-family: var(--mono);
+  font-size: 10px;
+  line-height: 1.7;
+  letter-spacing: 0.05em;
+  margin-top: 4rem;
+}
+
+.article-footer strong { color: rgba(255,255,255,0.65); }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 800px) {
+  .article-wrapper { grid-template-columns: 1fr; gap: 0; }
+  .sidebar { display: none; }
+  .headline { font-size: 2rem; }
+  .data-row { flex-wrap: wrap; }
+  .data-cell { flex: 1 1 40%; }
+}
+
+@media print {
+  .masthead, .alert-bar { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  .sidebar { display: none; }
+  .article-wrapper { grid-template-columns: 1fr; }
+}
+</style>
+</head>
+<body>
+
+<!-- MASTHEAD -->
+<header class="masthead">
+  <div class="pub-header">
+    <span class="pub-name">Cybersecurity Retrospective</span>
+    <span>Updated August 3, 2026 &nbsp;·&nbsp; Analysis &nbsp;·&nbsp; Education Technology</span>
+  </div>
+  <p class="kicker">Post-Incident Analysis &nbsp;/&nbsp; Education Sector &nbsp;/&nbsp; Vendor Security</p>
+  <h1 class="headline">The Canvas Collapse</h1>
+  <p class="deck">How the largest education data breach in history unfolded over three months, why it was preventable at every stage, how it was mishandled at every turn, what Instructure has changed since, and what the age of AI-assisted cyberattacks means for every institution whose students, teachers, and private conversations live inside a vendor's cloud.</p>
+  <div class="byline-bar">
+    <span class="byline-item"><strong>Originally published:</strong> May 18, 2026</span>
+    <span class="byline-item"><strong>Updated:</strong> August 3, 2026</span>
+    <span class="byline-item"><strong>Incident period:</strong> April 25 – ongoing</span>
+    <span class="byline-item"><strong>Threat actor:</strong> ShinyHunters</span>
+    <span class="byline-item"><strong>Status:</strong> Wave 1 data delivered · Litigation active · CPTO search underway</span>
+  </div>
+</header>
+
+<div class="alert-bar">
+  Updated August 3 &nbsp;·&nbsp; Wave 1 breach data delivered July 26 · InstructureCon: breach addressed head-on, hardening roadmap disclosed &nbsp;·&nbsp; Canvas accounts for 58% of all 2026 H1 breach notices (ITRC) &nbsp;·&nbsp; CTO departing · CPTO search underway &nbsp;·&nbsp; Seven security partners disclosed
+</div>
+
+<!-- ARTICLE -->
+<div class="article-wrapper">
+
+<article class="article-body">
+
+  <!-- OPENING -->
+  <p class="drop-cap">On the afternoon of May 7, 2026, tens of thousands of college students preparing for final exams opened their laptops, navigated to their school's Canvas login page, and were greeted not by a course dashboard but by a black screen and a message from a criminal extortion gang. "ShinyHunters has breached Instructure (again)," it read. "Instead of contacting us to resolve it they ignored us and did some 'security patches.'" The word "again" — planted deliberately in the middle of a message that appeared simultaneously at Harvard, Princeton, Penn, Duke, Columbia, Georgetown, and hundreds of other schools — was doing a great deal of work. It was both accurate and damning.</p>
+
+  <p>What followed over the next five days was a crash course in everything that can go wrong when a single private-equity-owned vendor holds the academic infrastructure of 41 percent of North American higher education, suffers a breach it misrepresents as contained, and watches a criminal group demonstrate — live, in front of millions of students, during finals week — that the misrepresentation was a lie.</p>
+
+  <p>By the time the acute crisis ended, Instructure had paid an undisclosed ransom — estimated at $10 million — to ShinyHunters, issued an apology for its lack of transparency, faced 24+ federal class action lawsuits naming both itself and its private equity owner KKR, and been called before both chambers of Congress. More than three months later, the forensic review continues — though Wave 1 breach data was delivered to institutions beginning July 26. Instructure held its annual InstructureCon conference in Louisville, Kentucky, July 22–25, where it addressed the breach directly in the opening keynote and disclosed a concrete security hardening roadmap. Its CTO is departing. A search is underway for a combined Chief Product and Technology Officer. The Canvas breach accounts for 58 percent of all breach notices issued in the entire first half of 2026, per the Identity Theft Resource Center. As of August 3, 2026, the incident that began April 25 is still not fully resolved — but Instructure is a materially different company than the one that sent "scheduled maintenance" notifications while 330 school login pages displayed a ransom message.</p>
+
+  <p>This is the story of how it happened, why it should not have, and what it reveals about the security posture of the systems that now hold the academic lives of an entire generation — updated as of August 3, 2026, with the most complete accounting available from Instructure's own primary source disclosures and independent analysis.</p>
+
+  <!-- KEY FIGURES -->
+  <div class="data-row">
+    <div class="data-cell">
+      <div class="data-number">275M</div>
+      <div class="data-label">Individuals affected</div>
+    </div>
+    <div class="data-cell">
+      <div class="data-number">8,809</div>
+      <div class="data-label">Institutions compromised</div>
+    </div>
+    <div class="data-cell">
+      <div class="data-number">3.65TB</div>
+      <div class="data-label">Data stolen</div>
+    </div>
+    <div class="data-cell">
+      <div class="data-number">24+</div>
+      <div class="data-label">Federal lawsuits filed</div>
+    </div>
+    <div class="data-cell">
+      <div class="data-number">~$10M</div>
+      <div class="data-label">Estimated ransom paid</div>
+    </div>
+  </div>
+
+  <!-- SECTION: TIMELINE -->
+  <div class="section-break"><div class="section-rule"></div><span class="section-label">Section I</span><div class="section-rule"></div></div>
+  <h2>A Three-Act Attack That Nobody Was Watching</h2>
+
+  <p>The breach did not begin on April 29. It began, by best available evidence, on April 25 — and the conditions that enabled it had been building for at least eight months before that.</p>
+
+  <p>In September 2025, ShinyHunters compromised Instructure's Salesforce business systems through social engineering. No Canvas product data was accessed in that incident. Instructure handled it quietly. The national press barely noticed. The company treated it as a customer-specific matter. Security researcher Brian Krebs later described this framing as "dramatically wrong." The September 2025 breach was not an isolated event. It was, in Krebs's analysis, "the proof of concept" — the first act of a three-part operation that ShinyHunters had been developing against Instructure's environment for nearly a year.</p>
+
+  <p>Act Two arrived on April 25, 2026, when the group gained initial access to Canvas systems by exploiting a vulnerability in Instructure's Free-For-Teacher account program — a feature that allowed any educator to create a Canvas account without institutional verification. The exposure window ran for twelve days. During that time, ShinyHunters used Canvas's own Data Access Platform (DAP) API — a system designed to give administrators bulk data access for institutional reporting — to exfiltrate 3.65 terabytes of data covering an estimated 275 million users across 8,809 institutions in at least ten countries.</p>
+
+  <div class="timeline-inset">
+    <div class="timeline-inset-title">Condensed Timeline of the Incident</div>
+    <div class="tl-row"><div class="tl-date">Sep 2025</div><div class="tl-event"><strong>Proof of concept:</strong> ShinyHunters breaches Instructure's Salesforce environment. Treated as isolated. <span class="flag flag-amber">Missed signal</span></div></div>
+    <div class="tl-row"><div class="tl-date">Feb 2026</div><div class="tl-event"><strong>Penn warning shot:</strong> ShinyHunters demands $1M from UPenn for Sep 2025 data. Penn refuses. Story gets minimal national coverage. <span class="flag flag-amber">Missed signal</span></div></div>
+    <div class="tl-row"><div class="tl-date">Mar 2026</div><div class="tl-event"><strong>Penn data published:</strong> 461MB of Penn data released publicly as retaliation for non-payment. Still treated as Penn-specific story.</div></div>
+    <div class="tl-row"><div class="tl-date">Apr 25</div><div class="tl-event"><strong>Initial access:</strong> ShinyHunters gains access via Free-For-Teacher accounts. Exfiltration begins via Canvas DAP API. <span class="flag flag-red">Breach</span></div></div>
+    <div class="tl-row"><div class="tl-date">Apr 29</div><div class="tl-event"><strong>Detection:</strong> Instructure detects unauthorized activity. Revokes access, engages forensics. Canvas Data 2 &amp; Beta shut down.</div></div>
+    <div class="tl-row"><div class="tl-date">May 1</div><div class="tl-event"><strong>First disclosure:</strong> CISO Steve Proud publishes first public statement. No mention of ShinyHunters or ransom demand.</div></div>
+    <div class="tl-row"><div class="tl-date">May 2</div><div class="tl-event"><strong>"Contained":</strong> Instructure declares incident contained. Confirms: names, emails, student IDs, messages exposed. Deploys patches. <span class="flag flag-amber">Premature</span></div></div>
+    <div class="tl-row"><div class="tl-date">May 3</div><div class="tl-event"><strong>ShinyHunters goes public:</strong> Posts dark web listing claiming 275M records, 3.65TB, 8,809 institutions. Sets May 6 deadline.</div></div>
+    <div class="tl-row"><div class="tl-date">May 6</div><div class="tl-event"><strong>"Resolved":</strong> Instructure declares incident resolved. "Canvas fully operational. No ongoing unauthorized activity." <span class="flag flag-red">False</span></div></div>
+    <div class="tl-row"><div class="tl-date">May 7</div><div class="tl-event"><strong>Act Three — defacement:</strong> ShinyHunters re-breaches via same vulnerability. 330 school login pages defaced. Finals week outage. New May 12 deadline. <span class="flag flag-red">Second breach</span></div></div>
+    <div class="tl-row"><div class="tl-date">May 8</div><div class="tl-event"><strong>Platform restored:</strong> Free-For-Teacher accounts permanently shut down. FBI mobilizes. Instructure removed from ShinyHunters' leak site.</div></div>
+    <div class="tl-row"><div class="tl-date">May 11</div><div class="tl-event"><strong>Ransom paid:</strong> Instructure confirms agreement with attacker. CEO issues first public statement of the crisis. Shred logs received. Apology for transparency failures. <span class="flag flag-amber">Unverified</span></div></div>
+    <div class="tl-row"><div class="tl-date">May 12–13</div><div class="tl-event"><strong>Lawsuits begin:</strong> 24+ federal class actions filed. House and Senate committees open investigations. Dept. of Education Student Privacy Policy Office sends formal FERPA letter.</div></div>
+    <div class="tl-row"><div class="tl-date">May 19–21</div><div class="tl-event"><strong>Reorganization &amp; briefing:</strong> Instructure restructures incident page by stakeholder group. Closed-door House briefing held. Preliminary data findings shared with Canvas administrators.</div></div>
+    <div class="tl-row"><div class="tl-date">May 26</div><div class="tl-event"><strong>CEO letter:</strong> Steve Daly formally acknowledges Canvas as "critical infrastructure." Announces Security &amp; Resilience Advisory Board. Confirms per-institution data breakdown will take "weeks and months."</div></div>
+    <div class="tl-row"><div class="tl-date">May 28–29</div><div class="tl-event"><strong>Free-for-Teacher content window:</strong> Educators given designated 48-hour access period to download their course materials before permanent shutdown. Some users miss the window.</div></div>
+    <div class="tl-row"><div class="tl-date">Jun 28</div><div class="tl-event"><strong>Security contact system launched:</strong> Instructure adds "security contact" feature to Canvas for per-institution data delivery. Institutions must designate up to two contacts by July 8.</div></div>
+    <div class="tl-row"><div class="tl-date">Jul 8</div><div class="tl-event"><strong>Data delivery process announced:</strong> CrowdStrike + Charles River Associates named as forensic partners. Per-institution ShareFile data packets described: wave 1 (provisioning + user records), wave 2 (messages, late September). Wave 1 delivery set for July 14.</div></div>
+    <div class="tl-row"><div class="tl-date">Jul 12</div><div class="tl-event"><strong>Educator lawsuit filed:</strong> New complaint filed separately addressing teachers who lost access to course content after Free-for-Teacher discontinuation. <span class="flag flag-amber">New litigation</span></div></div>
+    <div class="tl-row"><div class="tl-date">Jul 14</div><div class="tl-event"><strong>Data delivery PAUSED:</strong> ShareFile — the platform chosen to deliver breach data — discloses its own security threat. Instructure pauses all uploads. Delivery rescheduled. <span class="flag flag-red">Ironic echo</span></div></div>
+    <div class="tl-row"><div class="tl-date">Jul 22–25</div><div class="tl-event"><strong>InstructureCon Louisville:</strong> Breach addressed head-on in opening keynote and given a dedicated session the next morning. CEO Daly took named ownership. Security hardening roadmap presented by Chief Architect Pendleton. CTO Lysaght departure announced. CPTO search launched. Foundry standalone org and Athena AI tutoring agent announced. Gradebook export continuity tool entering early adopter program. Academic continuity roadmap disclosed. <span class="flag flag-green">Turning point</span></div></div>
+    <div class="tl-row"><div class="tl-date">Jul 26</div><div class="tl-event"><strong>Wave 1 data delivery begins:</strong> Institutions' security contacts begin receiving ShareFile links to breach data packets containing API provisioning records and user reports. Cover Letter, User Reference Worksheet, Institutional Reports Worksheet, and Data Field Dictionary included. Wave 2 (message data) remains on late September target.</div></div>
+    <div class="tl-row"><div class="tl-date">Jul 29–31</div><div class="tl-event"><strong>Customer webinars:</strong> CISO Steve Proud and Chief Architect Zach Pendleton host live webinars walking institutions through the delivered data packet contents and answering questions.</div></div>
+    <div class="tl-row"><div class="tl-date">Aug 3</div><div class="tl-event"><strong>Current status:</strong> Wave 1 deliveries underway. Message data (Wave 2) pending late September. ITRC H1 2026 report confirms Canvas breach = 58% of all H1 breach notices. Individual user notifications not yet sent. Root cause analysis not yet published. CPTO search ongoing. Message forensic review ongoing. <span class="flag flag-amber">Ongoing</span></div></div>
+  </div>
+
+  <p>The company's May 6 declaration that the incident was "resolved" and Canvas was "fully operational" came less than seventeen hours before ShinyHunters demonstrated, live, that the underlying vulnerability was not closed. The same Free-For-Teacher account flaw exploited on April 25 remained exploitable on May 7. Instructure had patched around it without closing it.</p>
+
+  <div class="pull-quote">
+    <blockquote>"The May 7 recompromise was ShinyHunters demonstrating publicly that the May 2 'containment' did not happen."</blockquote>
+    <cite>— Brian Krebs, Krebs on Security, May 8, 2026</cite>
+  </div>
+
+  <!-- SECTION: WHAT WAS BROKEN -->
+  <div class="section-break"><div class="section-rule"></div><span class="section-label">Section II</span><div class="section-rule"></div></div>
+  <h2>What Was Broken — And What Was Broken Before It Was Broken</h2>
+
+  <h3>The Free-For-Teacher Architecture Problem</h3>
+
+  <p>The proximate cause of both breaches was a vulnerability in Instructure's Free-For-Teacher account program — a free tier that allowed individual educators to create Canvas accounts without institutional verification. The program was designed for accessibility. Its security implications, apparently, were not fully modeled.</p>
+
+  <p>The deeper problem is structural: a free, unverified account tier had apparent access to the same production data environment — including DAP APIs and provisioning export mechanisms — as fully credentialed institutional deployments. For a system holding the academic records of 275 million people, this is an extraordinary architectural exposure. It is the equivalent of building a side door into a bank vault and leaving it accessible to anyone who claims to be a banker.</p>
+
+  <div class="callout callout-red">
+    <div class="callout-title">The DAP Access Problem</div>
+    <p>ShinyHunters did not crack encryption or deploy sophisticated malware. They used Canvas's own Data Access Platform API — a legitimate administrative tool — to export data at scale. The DAP provides bulk, table-level access to 89 database tables in the Canvas namespace, including user profiles, enrollment histories, private messages, discussion board content, assignments, and potentially submissions and grade records. Once an attacker has authenticated DAP access, the system does exactly what it was designed to do: export everything, efficiently.</p>
+    <p>Instructure has confirmed only four data categories were stolen: names, email addresses, student IDs, and private messages. The Hacker News now also confirms course names and enrollment data. The full scope of what was accessible through authenticated DAP access — including potentially grades, quiz question banks, phone numbers from the communication_channels table, and custom gradebook annotations — has never been comprehensively addressed by Instructure.</p>
+  </div>
+
+  <h3>The Patch That Wasn't</h3>
+
+  <p>Between May 1 and May 6, Instructure deployed patches it described as enhancing system security. On May 7, those patches were demonstrably insufficient. ShinyHunters used the same Free-For-Teacher vulnerability to re-enter the system, defacing over 330 login pages in what Krebs called "Act Three" — a public demonstration that the contained breach was not contained at all.</p>
+
+  <p>Instructure has never publicly explained why the May 1–6 remediation failed to close the attack surface. The statement "we deployed patches to enhance system security" covers a very wide range of actions, some of which apparently did not include fixing the thing that was broken. This explanation gap is one of several items the House Committee on Homeland Security specifically cited in its letter to CEO Steve Daly: "The recurrence of an intrusion within days of an initial breach disclosure, and Instructure's apparent failure to fully remediate the underlying vulnerabilities during that window, raise serious questions about the company's incident response capabilities."</p>
+
+  <h3>The Transparency Catastrophe</h3>
+
+  <p>Instructure's public communications during the incident represent a case study in what not to do. Consider the sequence as seen by affected students, parents, and faculty:</p>
+
+  <p>April 30: A vague notice about "disruption to tools relying on API keys" — no mention of a breach. May 1: First acknowledgment of a "cybersecurity incident perpetrated by a criminal threat actor." May 2: Declared contained, confirmed four data categories, issued CISO statement. May 6: Declared resolved, Canvas "fully operational," final status page entry for this incident, "no ongoing unauthorized activity." May 7, 4:20 PM: Login pages at hundreds of schools display a live ransom message from ShinyHunters. May 7, 4:41 PM: Status page acknowledges an investigation — framed as "Some users are having difficulties logging in." May 8: Status page reads "No incidents reported today."</p>
+
+  <p>Throughout the May 7 global outage — during which tens of millions of users were locked out and hundreds of schools displayed extortion messages — Instructure's status page reported 100% uptime. The 90-day uptime counter remained at a pristine 100.0%. The defacement of 330 school login pages appears nowhere in the official incident log. When Instructure finally took Canvas offline for maintenance, they labeled it "scheduled maintenance."</p>
+
+  <div class="pull-quote">
+    <blockquote>"Trust, in vendor security, is the absence of demonstrated dishonesty."</blockquote>
+    <cite>— Cloudskope Security Analysis, May 2026</cite>
+  </div>
+
+  <p>On May 11, Instructure issued an apology specifically for its "lack of transparency" — the first official acknowledgment that the gap between what it communicated and what actually happened was indefensible. CEO Steve Daly, who had made no public statement during the entire active crisis, appeared for the first time in this release. It was his opening line.</p>
+
+  <!-- SECTION: THE RANSOM -->
+  <div class="section-break"><div class="section-rule"></div><span class="section-label">Section III</span><div class="section-rule"></div></div>
+  <h2>The Ransom Payment and the Limits of "Shred Logs"</h2>
+
+  <p>On May 11, one day before the public data release deadline, Instructure confirmed it had "reached an agreement with the unauthorized actor." The company said it received "digital confirmation of data destruction (shred logs)" and assurance that "no Instructure customers will be extorted as a result of this incident, publicly or otherwise." The agreement was described as covering all impacted customers. Individual institutions were told there was "no need" to engage with ShinyHunters.</p>
+
+  <p>The ransom amount has not been disclosed. Instructure is privately held, following KKR and Dragoneer Investment Group's $4.8 billion acquisition in 2024, and has no public financial reporting obligations. Unconfirmed reports suggest approximately $10 million. For context, AT&T paid ShinyHunters $177 million in the 2024 Snowflake breach settlement.</p>
+
+  <div class="callout callout-amber">
+    <div class="callout-title">The Problem With Shred Logs</div>
+    <p>Shred logs are records generated by a system when files are deleted — a form of receipt for destruction. They can be fabricated. There is no cryptographically verifiable standard for proving data has been permanently deleted rather than merely relocated. No independent third party has reviewed ShinyHunters' shred logs. No forensics firm has publicly confirmed the 3.65TB was destroyed. Instructure itself acknowledged this in its own statement: "While there is never complete certainty when dealing with cyber criminals, we believe it was important to take every step within our control."</p>
+    <p>Several analysts have noted the precedent problem. AT&T paid ShinyHunters to delete their data in 2024 and received similar assurances. There is no mechanism to verify that a criminal group with demonstrated contempt for institutional authority honored a promise made under financial duress. The Register's summary was blunt: "There is no honor among thieves." The data was stolen. Whether it still exists in ShinyHunters' infrastructure — or has already been partially distributed through criminal markets — is unknown.</p>
+  </div>
+
+  <p>The decision to pay also carries a secondary risk that cybersecurity policy experts have long documented: it confirms that extortion works against this category of target. Paying a ransom does not close an investigation, does not satisfy regulatory obligations, and does not preclude future attacks. It simply makes the immediate problem go away — and signals to the broader criminal ecosystem that the education technology sector is a paying customer for data extortion.</p>
+
+  <!-- SECTION: LEGAL AND REGULATORY -->
+  <div class="section-break"><div class="section-rule"></div><span class="section-label">Section IV</span><div class="section-rule"></div></div>
+  <h2>The Legal and Regulatory Reckoning</h2>
+
+  <p>The litigation response has been swift and broad. At least 24 federal class action lawsuits have been filed across multiple jurisdictions, including Utah, the Southern District of California, the Southern District of New York, and Texas. The cases allege negligence, breach of legal obligations, and unjust enrichment. One Baylor nursing student filed in Waco, describing how she was studying for a statistics final in a campus library when Canvas went offline. A law student specifically alleged the outage "materially affected" her ability to prepare for a final examination scheduled for May 8. A New York complaint names KKR alongside Instructure, asserting the private equity firm failed to honor its responsibility to protect personal data following its $4.8 billion acquisition.</p>
+
+  <p>The KKR liability theory is novel and potentially significant. If courts accept that a private equity owner bears security obligations proportional to the data sensitivity of its portfolio companies, the implications extend far beyond this case. Dozens of major education technology companies are PE-owned. The question of whether financial sponsors have a duty of care toward the data subjects of the companies they acquire has never been definitively litigated.</p>
+
+  <div class="callout callout-slate">
+    <div class="callout-title">Regulatory Exposure</div>
+    <p><strong>FERPA:</strong> Canvas holds student education records subject to the Family Educational Rights and Privacy Act. Instructure's status as a school official with legitimate educational interest creates direct FERPA obligations for data security and breach notification.</p>
+    <p><strong>COPPA (Updated April 22, 2026):</strong> The FTC's updated Children's Online Privacy Protection Rule — which took effect just seven days before the breach — covers data of users under 13 and carries penalties up to $51,744 per affected child. Canvas serves K-12 down through elementary school. At scale, COPPA exposure alone could be existential.</p>
+    <p><strong>State student privacy laws:</strong> Approximately 130 state statutes — including New York Education Law 2-d and California's SOPIPA — impose vendor-specific notification and security duties independent of federal regulation. Some carry private rights of action. Multiple state attorneys general, including those in Texas, California, and Massachusetts, are expected to investigate.</p>
+    <p><strong>GDPR:</strong> Instructure operates across the EU. The breach affects institutions in the Netherlands, Sweden, and the UK, among others. GDPR notification timelines and potential fines apply to EU-resident data subjects.</p>
+  </div>
+
+  <p>Both chambers of Congress have now engaged. The House Committee on Homeland Security sent a letter to CEO Steve Daly specifically questioning how the same company could be breached twice in one week by the same threat actor — and asking about the company's decision to pay a ransom. The Senate Committee on Health, Education, Labor, and Pensions sent a parallel letter pressing on the types of data affected, the security improvements made in the aftermath, and the nature of the May 11 "agreement" with ShinyHunters. Congressional hearings are pending.</p>
+
+  <p>For affected institutions, CrowdStrike and Charles River Associates are co-forensic partners — a combination of technical forensics (CrowdStrike) and data analysis expertise (Charles River) that reflects the evidentiary scale of the task. CrowdStrike's Falcon EDR tool has been deployed across the Instructure network with 24/7 monitoring and has detected no ongoing unauthorized access. The e-discovery review of the exfiltrated data is complete for provisioning and user records (delivery beginning July 26) but still ongoing for message data (targeted late September). Separately, Instructure confirmed that its Parchment credentialing product was not affected, citing CrowdStrike scans for indicators of compromise that returned negative results.</p>
+
+  <!-- SECTION: AI AND THE NEW THREAT LANDSCAPE -->
+  <div class="section-break"><div class="section-rule"></div><span class="section-label">Section V</span><div class="section-rule"></div></div>
+  <h2>The AI Accelerant: Why This Will Happen Faster Next Time</h2>
+
+  <p>The Canvas breach was executed without sophisticated custom malware, without zero-day exploits, and without a large team of operatives. ShinyHunters is, by credible analyst accounts, a loosely organized group of teenagers and young adults based primarily in the US and UK. They exploited a misconfigured account tier and used a legitimate data export API. The attack was less about technical brilliance than about patience, targeting, and the recognition that Instructure's Free-For-Teacher program represented an unmonitored side door.</p>
+
+  <p>This is the template of modern data extortion. And artificial intelligence is making every component of that template dramatically faster, cheaper, and more accessible.</p>
+
+  <h3>The Compression of the Attack Timeline</h3>
+
+  <p>Time-to-exploit — the interval between when a vulnerability is disclosed and when attackers are observed using it in the wild — has collapsed from over 700 days in 2020 to approximately 44 days in 2025, according to industry data. That compression is not primarily driven by attackers getting smarter. It is driven by AI-assisted vulnerability analysis, automated patch reversal engineering, and tools that can scan the entire public-facing internet for vulnerable surfaces in a fraction of the time it previously took.</p>
+
+  <div class="callout callout-red">
+    <div class="callout-title">The Scale of Automated Scanning in 2026</div>
+    <p>Automated scanning of the public internet now runs at approximately 36,000 scans per second, according to IBM's 2025 Cost of a Data Breach Report. AI-assisted recon does not knock on doors — it knocks on every door on the internet simultaneously and flags which ones have weak locks. In this environment, an unverified account tier with production API access is not just a vulnerability — it is a beacon.</p>
+    <p>AI-powered cyberattacks have increased 72% year-over-year globally. In 2025, 41% of zero-day vulnerabilities were discovered through AI-assisted reverse engineering by attackers. The window between a company deploying a patch and attackers reverse-engineering that patch to understand what it fixed — and then finding other systems that haven't applied it yet — is now measured in hours, not weeks.</p>
+  </div>
+
+  <p>Unit 42 has documented attack groups in the ShinyHunters operational family moving from initial compromise to complete data exfiltration in under one hour — faster than most security teams can complete their initial incident triage. The implication is stark: by the time a breach is detected, the data is already gone. Detection does not equal prevention. The only meaningful defense is prevention.</p>
+
+  <h3>The SaaS Supply Chain as Attack Surface</h3>
+
+  <p>ShinyHunters does not primarily target individual companies. It targets platforms. The Snowflake campaign in 2024 breached 165 organizations through a single cloud provider. The Canvas breach reached 8,809 institutions through a single LMS vendor. This is the defining security architecture problem of the SaaS era: vendor concentration creates catastrophic multipliers. One misconfigured account tier at one vendor produces a breach that would require hundreds of individual compromises to replicate through direct institutional attacks.</p>
+
+  <p>Push Security's analysis of ShinyHunters' 2026 techniques traces a consistent playbook: device code phishing and vishing calls to harvest employee credentials, OAuth token theft from integrated SaaS platforms, lateral movement through interconnected cloud environments, and bulk exfiltration using the target's own legitimate data export tools. The Salesloft/Drift supply chain attack in 2025 demonstrated the cascading potential of this approach: a single GitHub environment compromise yielded Drift OAuth tokens, Salesforce access, AWS keys, Snowflake credentials, and progressive access to downstream customer environments. More than 1,000 organizations were breached through that chain.</p>
+
+  <div class="pull-quote">
+    <blockquote>"Almost every segment of an attack chain can be automated by AI. Attacks will increase in volume, speed and targeting. Malware is becoming far more targeted and personal — moving away from mass 'spray and pray' tactics toward specific individuals, organizations, or systems."</blockquote>
+    <cite>— SecurityWeek, Cyber Insights 2026</cite>
+  </div>
+
+  <h3>The Personalization Problem</h3>
+
+  <p>The data stolen in the Canvas breach is not just identity data. It is context data. Names, email addresses, school affiliations, teacher names, course names, and private messages between students and instructors — combined — create attack profiles that AI can weaponize at the scale of mass spam with the precision of targeted fraud. An attacker with this dataset can generate a phishing email that addresses a student by name, references their actual professor by name, mentions their actual course, and warns about a due date for an actual assignment. Every element is real. The email is indistinguishable from legitimate institutional communication.</p>
+
+  <p>Generative AI has made the construction of such messages trivial. It has also made the generation of deepfake voice messages — impersonating professors, registrars, or financial aid officers in follow-up calls — accessible to any actor with a laptop and a few hundred dollars in computing costs. The FBI's Internet Crime Complaint Center documented a 37% rise in AI-assisted business email compromise in 2025. Education sector fraud using student and institutional data is a natural extension of that pattern.</p>
+
+  <!-- SECTION: PUBLIC INFRASTRUCTURE -->
+  <div class="section-break"><div class="section-rule"></div><span class="section-label">Section VI</span><div class="section-rule"></div></div>
+  <h2>The Permanent Vigilance Problem: Public-Facing Infrastructure in the Age of AI</h2>
+
+  <p>The Canvas breach is not primarily a story about ShinyHunters. It is a story about the structural conditions that made the breach possible, the cultural conditions that allowed those structures to persist, and the technological conditions that will make the next breach faster and harder to prevent.</p>
+
+  <p>Every organization with public-facing internet infrastructure is running a continuous scan target. Shodan, Censys, and their successors index the entire public internet and make the resulting map available to anyone with an account. AI-assisted reconnaissance tools can now process that map, identify software versions, cross-reference known vulnerabilities, and generate targeted exploitation scripts — automatically, continuously, and at scale. The question for any public-facing system is not whether it will be probed but how quickly a probe will find something worth pursuing.</p>
+
+  <h3>What "Secure" Requires Now</h3>
+
+  <p>In this environment, security is not a configuration you apply and maintain. It is a continuous operational posture that must match the speed of the threat. The following are not aspirational standards — they are the minimum required baseline for any system holding sensitive data at scale in 2026:</p>
+
+  <div class="callout callout-slate">
+    <div class="callout-title">Minimum Security Posture for Public-Facing Infrastructure</div>
+    <p><strong>Zero-trust architecture:</strong> Every user, every device, every session is treated as untrusted until verified — regardless of whether they are internal or external. Free or unverified account tiers cannot share production API access with fully credentialed institutional deployments.</p>
+    <p><strong>Continuous attack surface monitoring:</strong> Automated scanning of your own infrastructure from the attacker's perspective, continuously, not periodically. Published CVEs reached 48,244 in 2025 — a 20% year-over-year increase. Patching cycles measured in weeks are no longer compatible with that publication rate.</p>
+    <p><strong>Privileged access separation:</strong> Bulk data export APIs — particularly those with the scope of Canvas's DAP — require the highest level of access controls, anomaly detection, and rate limiting. Exfiltration of 3.65TB should generate an alarm long before it completes.</p>
+    <p><strong>Transparent incident communication:</strong> The "scheduled maintenance" cover for an active criminal extortion event is not a communications strategy. It is a liability generator. When millions of people are affected, real-time, accurate disclosure is both an ethical obligation and, under FERPA, COPPA, and state law, a legal one.</p>
+    <p><strong>Third-party account tier security parity:</strong> Any account tier — free or paid, verified or unverified — that touches production data must meet the same security standards as fully credentialed access. The concept of a "free tier" with relaxed security controls is incompatible with holding data at the scale Canvas operated.</p>
+  </div>
+
+  <h3>The Vendor Concentration Risk</h3>
+
+  <p>The Canvas breach illustrates what security analysts have called the "vendor concentration paradox": the same economies of scale that make SaaS platforms efficient also make them catastrophic failure points. A platform serving 41% of North American higher education is not just a vendor — it is critical infrastructure. It should be regulated and audited as such.</p>
+
+  <p>The PowerSchool breach of January 2025 — which compromised 62 million K-12 student records and resulted in a $17.25 million settlement — was the first major signal. The Canvas breach, eighteen months later at five times the scale, suggests the signal was not acted upon. The FTC, the Department of Education, and Congress now face a moment of decision: whether to treat education technology vendors as critical infrastructure with commensurate security obligations, or to continue treating them as commercial software providers whose security practices are primarily their own business.</p>
+
+  <div class="pull-quote">
+    <blockquote>"The Canvas breach is not Instructure's failure alone. It is the failure of an entire EdTech vendor model that grew to scale during a period of low cyber attention and is now operating in a dramatically different threat environment."</blockquote>
+    <cite>— Cloudskope Security Analysis, May 2026</cite>
+  </div>
+
+  <div class="section-break"><div class="section-rule"></div><span class="section-label">Section VII</span><div class="section-rule"></div></div>
+  <h2>What Has Been Answered — and What Has Not</h2>
+
+  <p>As of August 3, 2026 — nearly four months after the breach began — several key questions have been formally answered by Instructure, while others remain open. This section distinguishes between what is now confirmed, what is still unresolved, and what has been quietly answered in ways that contradict earlier worst-case assumptions.</p>
+
+  <h3>Questions Now Answered</h3>
+
+  <p><strong>Were grades, submissions, and credentials compromised?</strong> No. CEO Steve Daly stated explicitly in his May 8 statement: "Core learning data (course content, submissions, credentials) was not compromised." The Department of Education's official May 12 bulletin confirmed the stolen categories as "usernames, email addresses, course names, enrollment information, and messages" — conspicuously not including grades, quiz banks, or academic records. This is a significant narrowing from the worst-case scenario of full DAP database access. The DAP tables for submissions and gradebook data were not exfiltrated.</p>
+
+  <p><strong>Was additional data taken in the May 7 second breach?</strong> No. Instructure confirmed the second access was detected approximately ten minutes after it began and no data was accessed or exfiltrated in the May 7 event. The defacement was a demonstration of continued access, not a second exfiltration. The defacement source was the same Free-For-Teacher vulnerability used in the April 25 attack — not a new entry point.</p>
+
+  <p><strong>Were other Instructure products affected?</strong> No. CrowdStrike's forensic review found no evidence of lateral movement from Canvas to Parchment or any other Instructure product. Parchment credential records are on separate infrastructure and were scanned for indicators of compromise with no findings.</p>
+
+  <p><strong>How will institutions receive their specific data?</strong> Via ShareFile, beginning July 26. Each institution designated up to two security contacts who will receive a secure link to a folder containing: API provisioning records, user reports, a Cover Letter, User Reference Worksheet, Institutional Reports Worksheet, and Data Field Dictionary. Message data follows in a second wave, targeted for late September. Kroll will coordinate individual user notifications on behalf of institutions after they receive their packets.</p>
+
+  <h3>Questions Still Open as of August 3, 2026</h3>
+
+  <p><strong>Why did the May 1–6 patch fail to close the vulnerability?</strong> Never explained. The same Free-For-Teacher flaw exploited on April 25 remained exploitable on May 7. Instructure has not publicly described what its patch did or did not do, or how the attack surface remained open despite stated remediation.</p>
+
+  <p><strong>What is the full scope of the message data?</strong> Still under forensic review. DAP message content is the one category where the forensic analysis is explicitly incomplete — targeted for delivery in late September. Until then, neither institutions nor affected individuals know what specific message content was exfiltrated or whether sensitive personal disclosures (medical accommodations, mental health discussions, disability requests) were among the messages taken.</p>
+
+  <p><strong>Was the data actually destroyed?</strong> Not independently verified. The shred logs provided by ShinyHunters remain unreviewed by any neutral third party. The ransom was paid. The promise was made. The data's actual fate is unknown.</p>
+
+  <p><strong>What did the Salesforce breach expose?</strong> Instructure has consistently described the September 2025 Salesforce event and the May 2026 Canvas event as distinct incidents involving different systems. It has never publicly disclosed what Salesforce customer data — if any — was accessed in September 2025 or whether there is any connection between the two incidents beyond the same threat actor.</p>
+
+  <p><strong>How many children's records were exposed?</strong> Uninvestigated publicly. Canvas serves K-12 to elementary level. The combined under-13 populations of confirmed affected K-12 districts — LAUSD, Chicago, Miami-Dade, Clark County, Houston ISD, Hawaii DOE, Boston, Dallas, and others — number in the millions. The FTC's updated COPPA rule (effective April 22, 2026) carries per-child penalties up to $51,744. Instructure and affected institutions have not estimated, acknowledged, or begun to quantify this exposure.</p>
+
+  <p><strong>Will individual users actually be notified?</strong> Not yet determined. Kroll is engaged. The process begins only after institutions receive and review their data packets. Many institutions will need to assess FERPA, COPPA, GDPR, and state-law obligations before deciding whether and how to notify. As of August 3, no affected student, teacher, or parent has received a formal breach notification letter from any channel. The people most directly harmed remain the last to receive formal disclosure.</p>
+
+  <p><strong>When will the root cause analysis be published?</strong> No date set. Instructure promised on May 11 to share root cause analysis and lessons learned "with the goal of helping the broader education technology community." As of August 3, it has not been published.</p>
+
+  <div class="ornament">◆ ◆ ◆</div>
+
+  <!-- SECTION VIII: UNDER-REPORTED ANGLES -->
+  <div class="section-break"><div class="section-rule"></div><span class="section-label">Section VIII</span><div class="section-rule"></div></div>
+  <h2>The Under-Reported Dimensions of the Breach</h2>
+
+  <p>Much of the initial wave of reporting focused on the headline figures and the drama of the May 7 defacement. Several important dimensions of the breach received substantially less coverage and warrant their own examination.</p>
+
+  <h3>Federal Government Enters the Response</h3>
+
+  <p>The response broadened well beyond congressional letters. The U.S. Department of Education's Student Privacy Policy Office formally requested information from Instructure to assess FERPA compliance, and Federal Student Aid confirmed that senior department leaders are in direct contact with Instructure's CISO. CISA was notified. The Student Privacy Policy Office sent Instructure a formal letter on the importance of protecting student privacy, with a May 29 update to the FSA Partners site confirming the engagement. The involvement of the Department of Education's student privacy arm shifts the accountability frame from a private commercial matter to a federal regulatory investigation with real enforcement teeth — the same pathway that produced mandatory data security programs at Illuminate Education and PowerSchool.</p>
+
+  <p>The House Homeland Security Committee's initial request was for a closed-door briefing, not public testimony. That briefing was held by May 21 and addressed the circumstances of both intrusions, the volume and nature of data accessed, steps Instructure took to contain the threat, and the adequacy of its coordination with federal law enforcement and CISA. Results have not been publicly disclosed.</p>
+
+  <h3>231 Million Unique Email Addresses — A More Precise Number</h3>
+
+  <p>A detail that received insufficient attention in early coverage: TechCrunch reported that ShinyHunters specifically claimed 231 million unique email addresses from the Canvas breach — a more precise figure than the 275 million "user records" headline number. The distinction matters. Unique email addresses are one of the most durable and reusable attack assets in the criminal data ecosystem. Unlike names or student IDs, email addresses are the key to all downstream phishing, credential stuffing, and account takeover campaigns. 231 million unique addresses — the vast majority on .edu domains — represent an extraordinary phishing resource that will remain operational regardless of whether the broader dataset was destroyed.</p>
+
+  <h3>Per-Institution Data Breakdowns Underway</h3>
+
+  <p>Instructure announced it has begun the institution-by-institution data breakdown it promised on May 11. The forensic work proceeded in two phases: provisioning and user records, now ready for delivery starting July 26; and message data, which remains in forensic review with a late September delivery target. Until institutions receive their packets and complete their own legal assessments, most cannot fulfill their FERPA, COPPA, GDPR, and state-law notification obligations — a critical point largely missed in coverage focused on Instructure rather than the downstream institutional compliance problem.</p>
+
+  <div class="callout callout-red">
+    <div class="callout-title">The Notification Burden Is on Schools, Not Instructure</div>
+    <p>One of the most under-reported aspects of this breach: under FERPA, the notification obligation runs to the <em>institutions</em>, not to Instructure. Schools are the FERPA-regulated entities; Instructure holds their data under the "school official with legitimate educational interest" exception. That exception is conditional on the vendor maintaining adequate security and providing accurate information to the school during an incident. Instructure's "scheduled maintenance" framing during a live extortion event puts that exception at legal risk. Meanwhile, FERPA requires disclosure to affected individuals within a reasonable timeframe once a breach of education records is confirmed. EU GDPR required notification to supervisory authorities within 72 hours of awareness — a clock that started on May 1 for any EU-resident data. Schools are on their own regulatory timelines, and most cannot complete their notifications until Instructure finishes its institution-specific data review.</p>
+  </div>
+
+  <h3>ShinyHunters' Clearnet Domain Suspended</h3>
+
+  <p>In a development that received almost no mainstream press coverage: ShinyHunters' primary clearnet domain was suspended in mid-May. The group announced a shift to onion-only leak infrastructure. Independent technical monitoring confirmed the domain was non-resolving in public DNS. This does not mean the group has been disrupted — it means they anticipated increased law enforcement scrutiny following the Canvas incident and proactively moved to more resilient infrastructure. The operational implication is that monitoring for future ShinyHunters activity now requires access to dark web infrastructure.</p>
+
+  <h3>The PowerSchool Warning Nobody Should Ignore</h3>
+
+  <p>The most consequential under-reported parallel in this incident is the PowerSchool precedent — and it is a warning, not a reassurance. In January 2025, PowerSchool, a cloud-based K-12 student information system, was breached. PowerSchool quickly paid a ransom, received assurances of data deletion, and declared the matter resolved. It was not resolved. The hacker — later identified as Matthew Lane, a 19-year-old college student studying cybersecurity, who was subsequently convicted — then contacted individual school districts to extort them separately, using the same stolen data he had supposedly deleted. Some districts paid. The ransom did not prevent follow-on extortion. The shred logs proved worthless.</p>
+
+  <div class="pull-quote">
+    <blockquote>"The problem is not that this one website had this cyber event. The problem is structural — and no competitor would be less vulnerable to a future breach."</blockquote>
+    <cite>— Rachel Tobac, cybersecurity expert, NPR, May 2026</cite>
+  </div>
+
+  <p>Instructure paid its ransom. Institutions should maintain heightened vigilance for individual contact from parties claiming to hold their specific data — because the PowerSchool playbook exists, it worked, and it is now documented as a viable follow-on revenue stream for extortion groups that retain data after a "destruction" agreement.</p>
+
+  <h3>The Data Nobody Talked About: Medical Accommodations and PHI</h3>
+
+  <p>One category of exposed data that received almost no coverage deserves explicit attention. Canvas private messages routinely contain medical accommodation requests — students disclosing disabilities, chronic conditions, mental health diagnoses, and learning differences to professors and advisors in order to receive accommodations under the Americans with Disabilities Act. These disclosures are intimate, sensitive, and in many cases legally protected. They appear in the Canvas Inbox because that is where the accommodation conversation happens. Teaching hospitals and medical schools that use Canvas for clinical training programs may also have had protected health information (PHI) flow through course communications, creating potential HIPAA exposure that has not been acknowledged in any Instructure communication.</p>
+
+  <p>The affected K-12 districts include some of the largest in the country — LAUSD, Chicago Public Schools, Miami-Dade, Clark County (Las Vegas), Houston ISD, the Hawaii Department of Education, Boston Public Schools, Detroit Public Schools, and Dallas ISD among others. The combined under-13 student populations at those districts alone number in the millions. Under the FTC's updated COPPA rule effective April 22, 2026 — which carries per-child penalties up to $51,744 — this exposure is potentially existential at scale.</p>
+
+  <!-- SECTION IX: DEVELOPMENTS MAY 19 - JULY 21 -->
+  <div class="section-break"><div class="section-rule"></div><span class="section-label">Section IX</span><div class="section-rule"></div></div>
+  <h2>What Has Happened: May 19 — August 3, 2026</h2>
+
+  <p>The three months following the acute crisis have produced a steady stream of primary source disclosures from Instructure's own incident update page, updated fourteen times between May 19 and July 21, plus InstructureCon, the Wave 1 data delivery, a landmark ITRC breach statistics report, and the public disclosure of seven security subprocessors. Together they substantially clarify what was and wasn't compromised, what has been fixed, and where significant gaps remain.</p>
+
+  <h3>The Data Scope Is Now Officially Confirmed — and Narrower Than Feared</h3>
+
+  <p>The single most important clarification came directly from CEO Steve Daly's May 8 statement, subsequently corroborated by the Department of Education's May 12 bulletin: the stolen data fields are usernames, email addresses, course names, enrollment information, and messages. Crucially, Daly stated explicitly: <em>"Core learning data (course content, submissions, credentials) was not compromised."</em> This means grades, assignment submissions, quiz results, and credentialing records — among the most sensitive academic data categories — were not in the stolen dataset. This is a meaningful narrowing from the worst-case scenario our earlier analysis identified as plausible through DAP access.</p>
+
+  <div class="callout callout-slate">
+    <div class="callout-title">Confirmed Stolen vs. Confirmed Not Stolen — Primary Source</div>
+    <p><strong>Confirmed stolen</strong> (CEO statement May 8, Department of Education May 12): Usernames, email addresses, course names, enrollment information, and messages. Some messages may incidentally include sensitive personal information.</p>
+    <p><strong>Confirmed not compromised</strong> (CEO statement): Core learning data — course content, assignment submissions, credentials, grades.</p>
+    <p><strong>Still under forensic review</strong> (July 21 update): DAP messaging data. Instructure's message-content forensic review remains ongoing. Delivery of message-specific data to institutions is now targeted for late September — more than five months after the initial breach.</p>
+    <p><strong>Note on the second breach (May 7):</strong> Instructure confirmed that the second breach was detected approximately 10 minutes after it began and <em>no additional data was accessed or exfiltrated</em> in the May 7 event. The defacement of 330 login pages was a demonstration of access, not a second exfiltration. This is a significant clarification from initial reporting.</p>
+  </div>
+
+  <h3>The CEO's "Critical Infrastructure" Admission</h3>
+
+  <p>Steve Daly's May 26 letter to customers contained a sentence that will define how this incident is discussed in regulatory and policy circles for years: <em>"Canvas is critical infrastructure."</em> Daly continued: "One of the most important things you've made clear is that Canvas is critical infrastructure, and when something disrupts that — especially at the end of the semester — the ripple effects are enormous. Honestly, we knew this at some level, but going through this has made it real in a way it wasn't before."</p>
+
+  <p>This is a CEO voluntarily describing his product as critical infrastructure — the same category occupied by power grids, water systems, and financial networks — in a public letter to customers. It is an extraordinary admission from a company that had spent years operating with the security posture of a commercial SaaS product. It is also exactly the framing that federal regulators, the FTC, and congressional oversight committees need to hear from the company's own leadership to justify elevated regulatory treatment.</p>
+
+  <div class="pull-quote">
+    <blockquote>"Canvas is critical infrastructure. We knew this at some level, but going through this has made it real in a way it wasn't before."</blockquote>
+    <cite>— Steve Daly, CEO, Instructure, May 26, 2026</cite>
+  </div>
+
+  <h3>Security Advisory Board and Industry Engagement</h3>
+
+  <p>In the May 26 letter, Daly also announced the formation of a Security and Resilience Advisory Board, to be led by Chief Academic Officer Melissa Loble. The board's stated goals are to develop a shared playbook for securing education technology environments and to build a redundant ecosystem that institutions can rely on during vendor outages. Daly explicitly described engagement with "government leaders, technology and integration partners, and institutions" as part of this effort. This represents a meaningful shift in posture — from treating security as an internal operations matter to treating it as an industry-level coordination challenge requiring cross-vendor and government collaboration.</p>
+
+  <h3>Charles River Associates: The Second Forensic Partner</h3>
+
+  <p>The July 8 update named two forensic partners for the first time: CrowdStrike for technical forensics, and Charles River Associates for data analysis. Charles River Associates is an economic consulting firm with a data breach practice specializing in the complex analysis of large-scale exfiltrated datasets. Their involvement signals that the per-institution analysis is not just a cybersecurity exercise but an evidence-preparation effort, likely anticipating that the forensic findings will be used in litigation, regulatory proceedings, and individual-institution FERPA compliance assessments.</p>
+
+  <h3>The Free-For-Teacher Aftermath: A Secondary Harm</h3>
+
+  <p>The permanent closure of Free-For-Teacher accounts — announced May 8, executed May 28-29 with a one-week recovery window — created a category of harm entirely separate from the data breach: the loss of years of educator-created course content. Community forum posts as recently as June 12 document teachers who missed the narrow recovery window and lost their entire professional teaching libraries — "many hours of material that we actively depend on" in the words of one affected user. A separate July 12, 2026 class action complaint was filed specifically on behalf of educators who lost access to user-owned course content after Instructure permanently discontinued Free-For-Teacher, distinct from the student data breach lawsuits.</p>
+
+  <p>Instructure has announced an "enhanced Canvas product built with former Free-for-Teacher users in mind" expected to launch in fall 2026. What this product will look like, whether it will accept imported course content, and whether it will require institutional verification has not been specified.</p>
+
+  <h3>The Per-Institution Data Delivery Process — and Its Own Security Incident</h3>
+
+  <p>The mechanics of how Instructure is delivering breach data to affected institutions reveal both the complexity of the forensic task and a remarkable irony that has received almost no press coverage.</p>
+
+  <p>Instructure's process, announced July 8, requires institutions to designate up to two "security contacts" who will receive a secure ShareFile link containing their institution's specific data packet. Each packet includes a Cover Letter, a User Reference Worksheet, an Institutional Reports Worksheet, and a Data Field Dictionary. The first wave — covering API provisioning records and user reports — is scheduled to begin July 26. Message data is in a separate second wave targeted for late September.</p>
+
+  <div class="callout callout-red">
+    <div class="callout-title">The ShareFile Incident: A Breach Data Delivery Platform Faces Its Own Security Threat</div>
+    <p>On July 14, Instructure paused the entire per-institution data delivery operation. The reason: ShareFile — the third-party platform Instructure selected to securely deliver breach data to 8,809 affected institutions — was itself subject to a disclosed security threat. Instructure's July 14 statement: "We recently learned that the third-party platform we've selected to deliver your data may have been subject to a security threat."</p>
+    <p>Instructure paused all uploads, assessed the threat, and determined that ShareFile's disclosure covered only its on-premise server infrastructure — entirely separate from the cloud environment Instructure planned to use. Delivery was rescheduled to begin July 26 after a one-week delay. The July 21 update confirmed: "We're confident moving forward, and data delivery will start next week after InstructureCon."</p>
+    <p>The incident is a minor operational footnote — Instructure handled it correctly and the data was never at risk. But the symbolism is striking: a company delivering the evidence of one security breach had to pause because the delivery platform itself disclosed a security incident. It is an almost perfect encapsulation of the threat environment these organizations are operating in.</p>
+  </div>
+
+  <h3>Kroll for Individual Notifications</h3>
+
+  <p>Instructure confirmed it has engaged Kroll — one of the world's largest cyber breach response firms — to coordinate notifications of individual users on behalf of affected institutions. This means affected students, teachers, and parents will receive formal breach notifications through Kroll's notification infrastructure rather than directly from Instructure or their own institution. The notification will be coordinated after institutions receive their data packets and make decisions about notification scope under FERPA and applicable state law. Wave 1 delivery is underway, but individual notifications have not yet begun as of August 3.</p>
+
+  <h3>Regulatory and Legal Status</h3>
+
+  <p>As of August 3: the Department of Education's Student Privacy Policy Office FERPA compliance inquiry is active. The FBI investigation is open. CISA is engaged. Congressional investigations in both chambers are ongoing. 24+ federal class actions remain in early litigation stage across multiple jurisdictions. No MDL consolidation has been announced. No settlement has been proposed. No trial dates have been set. The KKR liability theory — asserting the private equity owner bears security obligations for its portfolio company — has not yet been tested in any substantive hearing.</p>
+
+  <!-- SECTION X: POST-MORTEM (was IX) -->
+  <div class="section-break"><div class="section-rule"></div><span class="section-label">Section X</span><div class="section-rule"></div></div>
+  <h2>The Post-Mortem: What Should Have Happened</h2>
+
+  <p>A genuine post-mortem does not assign blame for its own sake. It identifies the decision points where different choices would have produced materially different outcomes. There were at least six such points in the Canvas incident.</p>
+
+  <h3>Before the Breach: Architecture</h3>
+
+  <p><strong>What should have happened:</strong> The Free-For-Teacher account tier should never have shared API access scope with production institutional data. Any account tier — free or paid, verified or unverified — that touches the same data environment as 275 million users' records requires the same security controls, audit logging, rate limiting, and anomaly detection as fully credentialed institutional access. The architectural decision to create a free tier with relaxed controls was the original sin. It was not a vulnerability that arrived from outside — it was a door Instructure built and left unlocked.</p>
+
+  <p>More broadly: bulk data export APIs like DAP require anomaly detection. The exfiltration of 3.65 terabytes of data across a twelve-day exposure window should have triggered rate-limiting alerts, volume anomaly flags, or behavioral analysis long before it completed. "The attacker used our own tools against us" is not a defense — it is an admission that the tools lacked guardrails.</p>
+
+  <h3>At Detection: Scope Assessment</h3>
+
+  <p><strong>What should have happened:</strong> When Instructure detected unauthorized access on April 29, the immediate question should have been: what could an actor with this access level have reached? The DAP API's 89 tables were known. The scope of potential exposure was determinable within hours. Instead, the May 2 statement narrowed the disclosure to four data categories that reflected what had been confirmed rather than what had been accessible. The correct approach was to disclose the maximum plausible scope immediately and narrow it as forensics completed — not to disclose the minimum confirmed scope and wait for events to force corrections.</p>
+
+  <h3>At Remediation: Verification</h3>
+
+  <p><strong>What should have happened:</strong> The May 1–6 patch cycle should have included adversarial verification — penetration testing by an external party specifically targeting the Free-For-Teacher attack surface — before declaring the incident contained. Declaring an incident resolved without independent confirmation that the attack vector is closed is not remediation. It is optimism. The May 7 second breach is the direct consequence.</p>
+
+  <h3>At Communication: Transparency</h3>
+
+  <p><strong>What should have happened:</strong> "Canvas is currently undergoing scheduled maintenance" is not an acceptable public communication for a live criminal extortion event affecting tens of millions of users. The correct communication was the truth: "Canvas is currently offline due to a security incident. We are working to restore service and will provide updates every [interval]. Do not attempt to log in until further notice." The "scheduled maintenance" framing was not just misleading — it was a regulatory exposure, actively deceptive to users who needed to know their data was at risk, and a direct contradiction of the transparency obligations embedded in FERPA, COPPA, and GDPR.</p>
+
+  <h3>At the Ransom Decision: Process and Precedent</h3>
+
+  <p><strong>What should have happened:</strong> The ransom payment decision should have been preceded by documented engagement with law enforcement on its advisability — FBI and CISA both generally counsel against payment, and some jurisdictions have legal implications for payments to sanctioned entities. The decision to pay also required a clear-eyed assessment of the PowerSchool precedent: paying did not prevent follow-on district-level extortion in that case, and there is no reason to assume it will here. Instructure should have publicly explained its reasoning — acknowledging the tension between the law enforcement consensus against payment and the practical reality of 275 million affected users — rather than announcing the outcome of a process it never disclosed was happening.</p>
+
+  <h3>At Disclosure: Completeness</h3>
+
+  <p><strong>What should have happened:</strong> The May 11 statement confirmed four data categories. CEO Daly's May 8 statement added course names and enrollment information, while explicitly ruling out grades, submissions, and credentials. The message data forensic review remains ongoing through late September. Even with these clarifications, Instructure still has not publicly addressed the Salesforce breach component, the scope of medical accommodation disclosures within message content, or the count of under-13 users affected. The correct approach, under every applicable notification framework, is to disclose the plausible maximum scope and narrow it as forensics confirm each category — not to wait for certainty before communicating anything.</p>
+
+  <!-- SECTION XI: INSTRUCTURECON AND AUGUST DEVELOPMENTS -->
+  <div class="section-break"><div class="section-rule"></div><span class="section-label">Section XI</span><div class="section-rule"></div></div>
+  <h2>InstructureCon and the Emerging Recovery: July 22 — August 3</h2>
+
+  <h3>The ITRC Report: Canvas Was 58% of All 2026 H1 Breach Notices</h3>
+
+  <p>The Identity Theft Resource Center's H1 2026 Data Breach Report, released July 22, put a definitive statistical marker on the scale of this incident. Of the 471 million breach notices generated by 1,029 data compromises in the first half of 2026, the Instructure Canvas breach accounts for 275 million — approximately 58 percent of the entire half-year total. No single incident has ever dominated the ITRC's semi-annual figures to this degree. The report also flagged the broader threat trends driving the environment: a surge in insider threats, shrinking corporate transparency in breach disclosure, and escalating zero-day exploitation. All three were present in the Canvas incident.</p>
+
+  <h3>InstructureCon Louisville: A Genuine Course Correction</h3>
+
+  <p>InstructureCon arrived in Louisville July 22–25 — two and a half months after the breach — under the theme "Education in the Making." The breach response was the unavoidable subtext of everything. The central question was whether Instructure would address it directly or manage around it. The answer was direct. The breach received its own dedicated session in the opening keynote, its own slot the following morning, and was surrounded by security and privacy panels — one moderated by a customer CIO. CEO Steve Daly took public named ownership and held it. Instructure reported meeting with more than 365 institutions and having approximately 500 conversations since the breach.</p>
+
+  <div class="pull-quote">
+    <blockquote>"This is a materially better company than the one I wrote about in May, period. Kudos on genuinely handling the breach; poor marks for generating momentum."</blockquote>
+    <cite>— Phil Hill, On EdTech Newsletter, July 29, 2026</cite>
+  </div>
+
+  <p>Chief Architect Zach Pendleton delivered the security technical session, framing the threat environment around the same AI-acceleration dynamic documented throughout this report: exploit timelines have compressed dramatically, attacker economics have fundamentally shifted, and traditional periodic-patching is structurally incompatible with the current threat. Remediation runs on three lines: reduced attack surface, stronger identity controls with a step-up authentication layer on top of existing SSO, and faster detection through the seven security partners now deployed.</p>
+
+  <p>One detail from InstructureCon deserves particular attention. After the September 2025 Salesforce breach, Instructure ran a security audit and built an 18-month remediation plan. After the May 2026 Canvas breach, CEO Daly directed an all-hands effort that closed all known issues in <strong>eight weeks</strong>. Analyst Phil Hill named the gap directly: "That is not a resourcing story. It is a judgment story, and judgment is the job."</p>
+
+  <h3>Academic Continuity Roadmap</h3>
+
+  <p>Paired with the security hardening was a continuity roadmap responding directly to the harm institutions experienced during finals week. Instructors receive a dashboard reminder to back up their courses. Administrators gain bulk gradebook exports — entering an early adopter program with no upgrade required — followed by course roster exports so an institution can reach its own students when Canvas is unavailable. Further out and explicitly uncommitted: read-only access during outages, offline grading, and a customer-controlled failover instance on AWS.</p>
+
+  <p>The gradebook and roster downloads landed as the most-praised announcements of the conference. They address the exact pain institutions felt in May and carry an implicit message that a typical technology company does not send: this data was always yours, and Instructure will stop controlling your ability to access it during an outage.</p>
+
+  <h3>Seven Security Partners — Publicly Named</h3>
+
+  <p>In a July 9 bulletin distributed to institutions, Instructure publicly disclosed all seven security subprocessors engaged following the breach. The full roster: <strong>Kroll</strong> (breach data search and review), <strong>Charles River Associates</strong> (breach data search and review), <strong>WithSecure</strong> (CRM environment URL/attachment threat inspection), <strong>ReliaQuest</strong> (AI-powered SIEM and managed detection/response), <strong>Fastly</strong> (Web Application Firewall), <strong>CrowdStrike EDR</strong> (24/7 endpoint detection on laptops and servers), and <strong>Wiz</strong> (cloud vulnerability scanning). The seven-partner deployment represents a comprehensive post-breach security overhaul covering data forensics, real-time detection, perimeter protection, and cloud hygiene simultaneously.</p>
+
+  <h3>Executive Changes and Organizational Restructuring</h3>
+
+  <p>InstructureCon disclosed significant leadership changes. CTO Michael Lysaght is departing. Chief Architect Pendleton is taking interim CTO duties. CPO Shiren Vijiasingam is moving to lead Foundry — a standalone organization with separate external investment, chartered to build in adjacent markets. Instructure is searching externally for a combined CPTO role, reasoning that AI has reshaped software development to the point that product and technology should no longer be separate organizations. Instructure also replaced two outside advisory firms that provided counsel during the breach incident — a pointed acknowledgment that its advisors failed it.</p>
+
+  <h3>Foundry and Athena</h3>
+
+  <p>The largest structural announcement was Foundry — a separate organization with its own external funding, structured so it does not compete for the capital that core Canvas products require. Its first project is Athena: an AI tutoring agent that connects to Canvas but lives outside it, maintaining a longitudinal model of individual student mastery rather than generating session-based study materials. Hinds Community College in Mississippi is implementing this fall alongside a formal research study. General availability targets early 2027. Athena will be sold as a separate line item to institutions.</p>
+
+  <h3>Wave 1 Data Delivery: Confirmed Underway</h3>
+
+  <p>Per Instructure's incident page, Wave 1 data delivery began Sunday evening July 26 as scheduled. Institutions whose security contacts were registered by the July 22 deadline received ShareFile links to packets containing API provisioning records, user reports, and supporting reference documents. CISO Steve Proud and Chief Architect Pendleton hosted live webinars July 29–31 to walk institutions through the packet contents. Wave 2 — message data, the category with the greatest individual-privacy implications — remains under forensic review with a late September target. As of August 3, individual user notifications through Kroll have not yet begun.</p>
+
+  <!-- SECTION XII: SIMILAR PLATFORMS AT RISK (renumbered) -->
+  <div class="section-break"><div class="section-rule"></div><span class="section-label">Section XII</span><div class="section-rule"></div></div>
+  <h2>The Broader Risk: Which Other Platforms Are Vulnerable</h2>
+
+  <p>Security experts asked directly during the Canvas crisis were unanimous: the problem is structural, and no competitor would be materially less vulnerable to the same attack pattern. Canvas and Blackboard together account for approximately 85% of the North American higher education LMS market. Add D2L Brightspace and Moodle, and four vendors hold essentially all of it. A successful attack against any of them would produce similar results.</p>
+
+  <div class="callout callout-amber">
+    <div class="callout-title">Platforms With Comparable Risk Profiles</div>
+    <p><strong>Blackboard Learn / Anthology:</strong> The second-largest LMS, with similar data concentration, bulk export APIs, and decades of accumulated technical debt. Canvas and Blackboard together represent ~85% of the sector. A Blackboard compromise would hit the other half of higher ed.</p>
+    <p><strong>D2L Brightspace:</strong> Widely deployed in K-12 and higher ed. Similar data architecture to Canvas. Bulk data access tools for institutional reporting create analogous DAP-style exposure.</p>
+    <p><strong>PowerSchool / Schoology:</strong> Already breached. PowerSchool is the dominant K-12 student information system, and Schoology is its integrated LMS. The ransom payment precedent is now set and documented.</p>
+    <p><strong>Moodle:</strong> Open source, deployed by institutions on their own infrastructure. The risk profile shifts to each institution's own configuration choices — which often means less security expertise, not more.</p>
+    <p><strong>Salesforce Education Cloud:</strong> Instructure's own Salesforce environment was already breached in September 2025. Salesforce is the CRM backbone of hundreds of university advancement, alumni, and admissions operations, holding donor records, application data, and alumni contact information at institutional scale.</p>
+    <p><strong>Ellucian Banner / Colleague:</strong> The dominant student information systems in higher education, holding financial aid, enrollment, billing, and academic records. These systems are increasingly cloud-hosted and API-connected, creating similar exfiltration surfaces.</p>
+    <p><strong>Google Classroom / Microsoft Teams for Education:</strong> Different architecture — less bulk API exposure — but massive data concentration. Private message content, assignment submissions, and classroom communications at scale.</p>
+    <p><strong>Zoom / Panopto / Echo360:</strong> Lecture recording platforms hold video recordings of classroom sessions that may include sensitive academic and personal content. Less discussed but increasingly significant data custodians.</p>
+    <p><strong>Any SaaS platform with a free or unverified access tier touching production data:</strong> The Free-For-Teacher vulnerability class is not unique to Canvas. Any platform that offers a freemium tier, a developer sandbox, or an unverified onboarding path with shared API access to production data carries the same structural risk.</p>
+  </div>
+
+  <p>The fundamental problem, as cybersecurity professor Shaila Rana articulated to K-12 Dive, is asymmetry: "Users can't opt out, can't meaningfully audit how their data is protected, and are left absorbing the consequences when things go wrong. What makes attacks on platforms like this especially damaging is the infrastructure dependency." Students and families cannot choose not to use Canvas if their institution uses Canvas. That captive dependency is precisely what makes the education sector an attractive target — and precisely why it requires regulatory protection rather than market incentives.</p>
+
+  <!-- SECTION XI: RECOMMENDATIONS -->
+  <div class="section-break"><div class="section-rule"></div><span class="section-label">Section XIII</span><div class="section-rule"></div></div>
+  <h2>Recommendations: Four Audiences, Four Playbooks</h2>
+
+  <h3>For Canvas Users — Students, Parents, Faculty, and Staff</h3>
+
+  <div class="callout callout-slate">
+    <div class="callout-title">Immediate Actions (If Not Yet Done)</div>
+    <p><strong>Change your Canvas password.</strong> Do it now, if you haven't since May 1. Use a unique password not reused anywhere else. Password managers (Bitwarden, 1Password) make this trivial and should be considered essential for anyone with more than a handful of online accounts.</p>
+    <p><strong>Enable MFA on Canvas and your institutional email.</strong> Multi-factor authentication is the single highest-impact security measure available to individual users. It stops credential-stuffing attacks cold even if your password is known.</p>
+    <p><strong>Freeze your credit — and your child's.</strong> This is free, reversible, and takes about 30 minutes across all three bureaus (Equifax, Experian, TransUnion). A credit freeze prevents new accounts from being opened in your name regardless of what data attackers hold. For parents of K-12 students: children's credit can be frozen too, and should be — children's SSNs are particularly valuable to identity thieves because the fraud often goes undetected for years.</p>
+    <p><strong>Change passwords on any account using the same email address as Canvas.</strong> Your .edu email address is now confirmed in criminal databases. Credential stuffing bots will test it against every major service. Every account using that email with a reused or similar password is at risk.</p>
+  </div>
+
+  <div class="callout callout-amber">
+    <div class="callout-title">Ongoing Vigilance — Through at Least End of 2027</div>
+    <p><strong>Treat every Canvas-themed email as suspicious for the next 18 months.</strong> Attackers with your name, school, professor's name, course name, and message context can generate highly convincing phishing emails. The test is not whether the email looks real — it will. The test is whether you navigated to the link directly through your school's official website rather than clicking a link in email.</p>
+    <p><strong>Watch for medical accommodation and disability-related contact.</strong> If you ever sent Canvas messages about a disability, mental health condition, medical accommodation, or related personal matter, that content may have been exfiltrated. Targeted extortion using such content is a realistic risk. Document any suspicious contact and report it to your institution and the FBI's IC3 (ic3.gov).</p>
+    <p><strong>Do not engage with anyone claiming to hold your data.</strong> The FBI's explicit guidance: do not respond to, pay, or negotiate with anyone claiming to have stolen your information. Engagement confirms your identity as a viable target for follow-on extortion.</p>
+    <p><strong>Monitor your institution's communications for the per-institution data breakdown.</strong> Instructure has promised institution-specific disclosure. When your school publishes it, read it — it will clarify whether your specific data categories were exposed and what your institution's notification obligations required them to communicate.</p>
+    <p><strong>Know your legal rights.</strong> At least 24 federal class actions have been filed. You may have a right to compensation for breach of privacy, time spent responding to the breach, and documented out-of-pocket costs. Consult a data privacy attorney. There are time limits on legal action.</p>
+    <p><strong>For teaching hospital and clinical training program participants:</strong> If your institution used Canvas for any clinical training where patient information may have been referenced in messages, contact your institution's HIPAA compliance officer immediately.</p>
+  </div>
+
+  <h3>For Instructure — The Vendor</h3>
+
+  <div class="callout callout-red">
+    <div class="callout-title">What Instructure Must Do to Restore Trust</div>
+    <p><strong>Publish the root cause analysis.</strong> You promised it on May 11. It has not appeared. Every day it does not appear is another day the broader education technology community cannot learn from your specific failure. The root cause analysis should explain: (1) the exact Free-For-Teacher vulnerability, (2) why the May 1–6 patch did not close it, (3) how 3.65TB was exfiltrated without triggering anomaly detection, and (4) what architectural changes — not just patches — have been made to prevent recurrence.</p>
+    <p><strong>Complete and publish the per-institution data breakdown.</strong> Institutions cannot meet their own FERPA, COPPA, GDPR, and state-law obligations until they know what data was accessed for their specific user population. Every week of delay in completing this review is a week in which hundreds of institutions are legally non-compliant through no fault of their own.</p>
+    <p><strong>Reform the status page to a binding incident log.</strong> The status page that reported 100% uptime during a global outage caused by a live criminal extortion event is a transparency failure that is now documented in two congressional letters and dozens of lawsuits. Commit publicly to a policy: any security event causing user-facing disruption will be disclosed on the status page within one hour of detection, using accurate language, regardless of how the disclosure reflects on the company.</p>
+    <p><strong>Implement zero-trust access tier security parity.</strong> No account tier — free, trial, developer, or institutional — should have API access scope that differs from its authenticated identity assurance level. The Free-For-Teacher tier was accessible without institutional verification. No unverified account should have bulk data export access. This is a policy decision, not a technical one, and it should be made at the board level.</p>
+    <p><strong>Deploy anomaly detection on all bulk data export APIs.</strong> Rate limiting, volume alerting, and behavioral analysis on DAP queries, provisioning reports, and user export APIs should have caught a 3.65TB exfiltration. It did not. These controls should be standard on any API capable of bulk data extraction and should be validated by an external penetration test.</p>
+    <p><strong>Disclose the Salesforce breach component.</strong> ShinyHunters explicitly claimed your Salesforce environment was compromised. You described the September 2025 Salesforce event and the May 2026 Canvas event as "distinct incidents involving different systems." You have never addressed whether Salesforce customer data was accessed in either incident. This is an open question that your affected customers — and their regulators — are entitled to a direct answer on.</p>
+    <p><strong>Commission independent verification of the "shred logs."</strong> Hire a neutral third-party forensics firm to attempt to verify, to the extent technically possible, that the stolen data was destroyed. Publish the methodology and findings. This will not provide certainty — that is not possible — but it demonstrates good faith and provides affected users with more than a criminal gang's word.</p>
+  </div>
+
+  <h3>For Users of SaaS Software — Institutions, Organizations, and Individuals</h3>
+
+  <div class="callout callout-slate">
+    <div class="callout-title">How to Operate More Safely in a SaaS-First World</div>
+    <p><strong>Audit your SaaS footprint.</strong> Most organizations do not have a complete picture of every SaaS platform their employees, students, or members use, what data each platform holds, and what APIs and integrations connect them. Build that map. The Canvas breach exposed not just Canvas data but the data of every LTI-integrated tool connected to Canvas. Your exposure is the sum of your SaaS footprint, not just your primary platform.</p>
+    <p><strong>Apply data minimization to every platform.</strong> Do not put data into a SaaS platform that you do not need the platform to have. Canvas did not need to hold years of private message archives at institutional scale — but it did, because nobody designed a retention and deletion policy for that data. Every SaaS platform you use should have a documented data retention limit and an active deletion schedule.</p>
+    <p><strong>Negotiate breach notification SLAs into your contracts.</strong> Standard SaaS contracts often give vendors wide latitude on disclosure timelines. Before your next renewal, require: (a) notification within 24 hours of confirmed unauthorized access, (b) status page accuracy guarantees, (c) per-institution data scope reports within a defined window, and (d) the right to terminate without penalty following a material breach. The Canvas breach showed what happens when none of these terms exist.</p>
+    <p><strong>Require security audits and penetration testing certifications.</strong> SOC 2 Type II certification should be a minimum. Ask specifically about: API rate limiting and anomaly detection on bulk export endpoints; security controls on free or unverified account tiers; incident response testing cadence; and the scope of the most recent third-party penetration test.</p>
+    <p><strong>Verify that free or unverified account tiers are security-equivalent to paid tiers.</strong> If a vendor offers a free version or a developer sandbox, ask explicitly: does this tier share production data API access with paid institutional accounts? If the answer is yes or ambiguous, that is the Canvas architecture problem, and it should be resolved before you sign.</p>
+    <p><strong>Build a multi-vendor resilience plan.</strong> The Canvas outage demonstrated that 41% of North American higher education had a single point of failure. No institution had a tested backup plan for Canvas being offline for 48+ hours during finals. Every organization with a critical dependency on a single SaaS vendor should have a documented degraded-operations plan: what do you do when that platform is offline for 24 hours? 72 hours? A week?</p>
+    <p><strong>Review your cyber insurance coverage.</strong> Many education institutions have cyber liability policies that may cover notification costs, legal fees, and regulatory penalties from a vendor breach. Review your policy now — before you need it — to understand whether third-party vendor breaches are covered, what the notification timeline requirements are to preserve coverage, and whether your policy covers ransom payment scenarios.</p>
+  </div>
+
+  <h3>For SaaS Platforms in General — Vendors and Developers</h3>
+
+  <div class="callout callout-red">
+    <div class="callout-title">The Security Architecture Obligations of Scale</div>
+    <p><strong>A platform holding sensitive data for millions of users at hundreds of institutions is critical infrastructure.</strong> It should be designed, operated, audited, and regulated as such — regardless of what its terms of service say it is. The Canvas breach is what happens when a platform reaches the scale of critical infrastructure but operates with the security posture of a commercial SaaS product.</p>
+    <p><strong>Eliminate free or unverified access tiers with production data scope.</strong> The Free-For-Teacher architecture is the proximate cause of the Canvas breach. Any platform with a free, developer, trial, or sandbox tier must enforce strict data isolation: unverified accounts get synthetic or sandboxed data, not production data APIs. This is not negotiable at scale.</p>
+    <p><strong>Instrument all bulk data export APIs for anomaly detection.</strong> An API capable of exfiltrating a terabyte of data should generate alerts before it completes. Rate limits, volume thresholds, behavioral baselines, and geographic anomaly detection on export endpoints should be standard, not optional.</p>
+    <p><strong>Establish transparent, binding incident communication standards.</strong> "Scheduled maintenance" for a criminal extortion event is a regulatory and ethical failure. Platforms should commit to: (a) accurate incident labeling within one hour of confirmation, (b) status page updates that reflect reality rather than marketing positioning, (c) direct customer notification within four hours of confirmed unauthorized access, and (d) daily public updates until resolution.</p>
+    <p><strong>Invest in attack surface monitoring at the speed of AI-assisted threats.</strong> With vulnerability exploitation timelines now measured in 44 days on average — and hours for well-resourced actors — continuous automated attack surface monitoring is not a luxury. It is the minimum operational requirement for any public-facing platform holding sensitive data. Periodic penetration testing, monthly or quarterly, is structurally incompatible with the current threat environment.</p>
+    <p><strong>Separate your incident response plan from your PR plan.</strong> The Canvas crisis demonstrated what happens when incident communication is managed as a reputation problem rather than a safety obligation. The people writing status page updates should be security engineers with instructions to be accurate, not communications staff with instructions to minimize disruption. At the scale of platforms like Canvas, accurate disclosure <em>is</em> the responsible action — even when it is commercially uncomfortable.</p>
+    <p><strong>Treat the ransom payment decision as a policy, not a crisis judgment.</strong> Instructure appears to have made its ransom payment decision under time pressure with limited options. Any organization holding data at scale should have a pre-established, board-approved policy for ransom payment scenarios that includes: legal review, law enforcement consultation, independent assessment of the credibility of deletion promises, and documented acknowledgment of the PowerSchool precedent — that payment does not prevent follow-on extortion and may encourage it.</p>
+    <p><strong>Publish your security architecture as a competitive advantage.</strong> In a world where the Canvas breach is documented, verifiable, and cited in every procurement conversation for the next five years, the platforms that publish detailed technical documentation of their security controls, access tier isolation, anomaly detection, and incident response testing will be preferred. Security transparency is now a market differentiator, not a liability.</p>
+  </div>
+
+  <div class="ornament">◆ ◆ ◆</div>
+
+  <p>The Canvas breach will be studied for years — in law schools, in computer science programs, in regulatory proceedings, and in the boardrooms of every company that holds sensitive data at scale. What it demonstrates is not primarily a technical lesson. It is a governance lesson: that the concentration of critical data in private-equity-owned commercial platforms, without regulatory oversight commensurate with their scale, without transparency obligations matching their reach, and without security architecture reflecting their importance, produces exactly the outcome we witnessed in May 2026.</p>
+
+  <p>As of August 3, the accounting is materially better than it was in mid-May. Grades and submissions were not taken. The second breach exfiltrated nothing. CrowdStrike found no lateral movement. Seven security partners are deployed. Wave 1 breach data is being delivered to institutions. InstructureCon addressed the breach directly, disclosed a genuine hardening roadmap, and introduced academic continuity tools that institutions badly needed. Phil Hill's verdict — "a materially better company than the one I wrote about in May" — is fairly earned. The attacker economics framing from Chief Architect Pendleton at InstructureCon is accurate and shows the company understands the threat environment it is now operating in.</p>
+
+  <p>What remains incomplete is equally real. Three months in, 275 million affected individuals have not received a breach notification letter. The message data forensic review — covering the billions of private conversations that are the most sensitive category in the entire breach — will not be delivered to institutions until late September, and individual notifications through Kroll cannot begin until after that. The root cause analysis has not been published. The ransom payment has never been independently verified as resulting in actual data destruction. The count of under-13 children's records has not been estimated. The Salesforce component has not been addressed. The KKR private equity liability theory is untested.</p>
+
+  <p>The CEO called his platform critical infrastructure. The eight-week hardening sprint versus the eighteen-month remediation plan is a judgment story that will follow Instructure for years. The students locked out during finals week, the teachers who lost course libraries in a 48-hour shutdown window, the parents whose children's records sit in a forensic review they have not been notified about — they are still waiting for the process to complete. The measure of what this incident ultimately produces is not an apology or a conference keynote. It is whether the systems, laws, and incentives that made this incident possible are actually changed. That verdict is still out.</p>
+
+</article>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+
+  <div class="sidebar-card">
+    <div class="sidebar-card-head">Current Status</div>
+    <div class="sidebar-card-body">
+      <ul class="sidebar-list">
+        <li>Canvas LMS &nbsp;<span class="status-pill pill-green">Fully operational</span></li>
+        <li>Free-For-Teacher &nbsp;<span class="status-pill pill-red">Permanently closed</span></li>
+        <li>New educator product &nbsp;<span class="status-pill pill-amber">Fall 2026 launch</span></li>
+        <li>Wave 1 data delivery &nbsp;<span class="status-pill pill-green">Underway from July 26</span></li>
+        <li>Wave 2 (message data) &nbsp;<span class="status-pill pill-amber">Late September est.</span></li>
+        <li>Individual user notifications &nbsp;<span class="status-pill pill-red">Not yet begun (Kroll)</span></li>
+        <li>Root cause analysis &nbsp;<span class="status-pill pill-red">Not published</span></li>
+        <li>Ransom paid &nbsp;<span class="status-pill pill-amber">Confirmed, ~$10M est.</span></li>
+        <li>Data destruction &nbsp;<span class="status-pill pill-red">Unverified</span></li>
+        <li>CTO Lysaght &nbsp;<span class="status-pill pill-red">Departing</span></li>
+        <li>CPTO search &nbsp;<span class="status-pill pill-amber">Underway (external)</span></li>
+        <li>7 security partners &nbsp;<span class="status-pill pill-green">Deployed &amp; named</span></li>
+        <li>Dept. of Education FERPA inquiry &nbsp;<span class="status-pill pill-amber">Active</span></li>
+        <li>Congressional investigations &nbsp;<span class="status-pill pill-amber">Both chambers, active</span></li>
+        <li>Class action lawsuits &nbsp;<span class="status-pill pill-amber">24+ filed, early stage</span></li>
+        <li>Security Advisory Board &nbsp;<span class="status-pill pill-amber">Being formed</span></li>
+        <li>Foundry / Athena AI tutor &nbsp;<span class="status-pill pill-amber">Beta, GA early 2027</span></li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sidebar-card">
+    <div class="sidebar-card-head">AI Threat Landscape</div>
+    <div class="sidebar-card-body">
+      <ul class="sidebar-list">
+        <li>Internet scanning rate: <strong>36,000 scans/second</strong> globally</li>
+        <li>Time-to-exploit compressed from <strong>700 days (2020) → 44 days (2025)</strong></li>
+        <li>AI-powered attacks up <strong>72% YoY</strong> globally</li>
+        <li><strong>41%</strong> of 2025 zero-days found via AI-assisted reverse engineering</li>
+        <li>Initial compromise to full exfiltration: <strong>under 1 hour</strong> (Unit 42)</li>
+        <li><strong>48,244</strong> CVEs published in 2025, up 20% YoY</li>
+        <li><strong>76%</strong> of organizations cannot match AI attack speed</li>
+        <li>AI-assisted BEC up <strong>37%</strong> per FBI IC3</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sidebar-card">
+    <div class="sidebar-card-head">Confirmed Stolen Data</div>
+    <div class="sidebar-card-body">
+      <ul class="sidebar-list">
+        <li>Usernames &amp; email addresses ✓</li>
+        <li>Course names &amp; enrollment data ✓</li>
+        <li>Student / staff ID numbers ✓</li>
+        <li>Private Canvas Inbox messages ✓ <em style="font-size:0.75rem;color:var(--muted)">(forensic review ongoing)</em></li>
+        <li style="color:var(--green);"><strong>NOT compromised:</strong> Grades, submissions, credentials, course content (CEO confirmed)</li>
+        <li style="color:var(--muted);">Passwords, SSNs, financials: Not confirmed stolen</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sidebar-card">
+    <div class="sidebar-card-head">What's Still Unanswered</div>
+    <div class="sidebar-card-body">
+      <ul class="sidebar-list">
+        <li>Why May 1–6 patch failed to close the vulnerability</li>
+        <li>Actual ransom amount paid (~$10M unconfirmed)</li>
+        <li>Independent verification of data destruction</li>
+        <li>Full message data scope (late September delivery)</li>
+        <li>Salesforce breach component (never addressed)</li>
+        <li>How many under-13 records exposed (COPPA liability)</li>
+        <li>Root cause analysis (promised, not published)</li>
+        <li>Congressional briefing outcomes (closed-door)</li>
+        <li>KKR PE liability theory — untested in court</li>
+        <li>Individual user notifications (not yet sent)</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="sidebar-card">
+    <div class="sidebar-card-head">Protect Yourself Now</div>
+    <div class="sidebar-card-body">
+      <ul class="sidebar-list">
+        <li>Change Canvas password if not done since May 1</li>
+        <li>Enable MFA on Canvas &amp; linked email</li>
+        <li>Freeze credit at all 3 bureaus — free, reversible</li>
+        <li>Treat all Canvas-themed emails as suspicious through 2026</li>
+        <li>Do not engage anyone claiming to have your data</li>
+        <li>Contact your district/institution for K-12 parent data exposure</li>
+      </ul>
+    </div>
+  </div>
+
+</aside>
+</div>
+
+<!-- FOOTER -->
+<footer class="article-footer">
+  <strong>Sources:</strong> Instructure Security Incident Update page — primary source, full update history May 8 – July 21, 2026 (instructure.com/incident_update); InstructureCon 2026 Conference Notes — Phil Hill, On EdTech Newsletter (July 29, 2026); Wake Forest University Canvas Site — Instructure Security Subprocessor Notice (July 9, 2026, 7 named partners); ITRC H1 2026 Data Breach Report (July 22, 2026, via DataBreaches.net); Inside Higher Ed: "Canvas Pauses Data Delivery" (July 16, 2026); DataBreaches.net: "The Breach That Won't End" (July 16, 2026); US Department of Education Federal Student Aid Partners Knowledge Center announcement (updated May 29, 2026); Hall Attorneys Canvas Data Breach case page (educator complaint July 12, 2026); Instructure Community Free-for-Teacher restoration thread (June 12, 2026); CrowdStrike, Charles River Associates, ReliaQuest, WithSecure, Fastly, Wiz — forensic and security partner disclosures; Kroll notification services engagement; The Hacker News; Inside Higher Ed; The Register; Krebs on Security; Dark Reading; TechCrunch; TechRadar; GovTech; Bloomberg Law; Wikipedia (2026 Canvas data breach, accessed August 2026); NPR; CNN; EdWeek; K-12 Dive; Cybersecurity Dive; The Conversation; Push Security (ShinyHunters technique analysis); Cloudskope Security; Dataminr/Intel Brief; Protos Labs Intelligence Report; Reed Smith LLP; McDonald Hopkins LLP; ComplianceHub.wiki; TechInformed; Trend Micro Research; Chimicles Schwartz Kriner LLP; Canvas Gets Schooled — FKKS Advertising Law; Synack 2026 State of Vulnerabilities Report; IBM 2025 Cost of a Data Breach Report; SecurityWeek Cyber Insights 2026; Unit 42 threat intelligence; The Daily Pennsylvanian; The Harvard Crimson; Duke Chronicle; WRAL; Emsisoft; Mandiant/Google; Ransomware.live; Instructure DAP Developer Documentation; US House Committee on Homeland Security letter to Instructure CEO Steve Daly.
+  <br><br>
+  <strong>Originally published:</strong> May 18, 2026 &nbsp;·&nbsp; <strong>Updated:</strong> August 3, 2026 &nbsp;·&nbsp; <strong>Analysis period:</strong> April 25 – August 3, 2026 &nbsp;·&nbsp; This document synthesizes publicly available reporting and primary source material. It does not constitute legal advice. Affected individuals seeking legal guidance should consult a qualified data privacy attorney in their jurisdiction. The current authoritative source for Instructure's own disclosures is instructure.com/incident_update.
+</footer>
+
+</body>
+</html>
