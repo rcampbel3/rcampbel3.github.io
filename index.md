@@ -6,4 +6,4 @@ title: Ross Campbell — Docs
 
 - [Some guide](/docs/some-guide/)
 - [A PDF](/docs/pdfs/example.pdf)
-- [A standalone HTML doc](/docs/html/dashboard.html)
+- [Impossible Anatomy](/docs/html/impossible_anatomy.html)
